@@ -8,6 +8,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AutomationCompatibleInterface.s
 import "hardhat/console.sol";
 
 /* Errors */
+// If we pass variables to this error we can easier see why this error occured
 error Raffle__UpkeepNotNeeded(uint256 currentBalance, uint256 numPlayers, uint256 raffleState);
 error Raffle__TransferFailed();
 error Raffle__SendMoreToEnterRaffle();
@@ -48,7 +49,7 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
 
     /* Functions */
     constructor(
-        address vrfCoordinatorV2,
+        address vrfCoordinatorV2, //contract -> we will need mock for it for local testing
         uint64 subscriptionId,
         bytes32 gasLane, // keyHash
         uint256 interval,
@@ -89,11 +90,16 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
      * 3. The contract has ETH.
      * 4. Implicity, your subscription is funded with LINK.
      */
+    // `performData` is used if we want to checkUpkeep to do some other stuff depend on how that checkUpkeep went.
+    // changing `bytes calldata` into `bytes memory`, so we can pass empty string "" in performUpkeep function
     function checkUpkeep(bytes memory /* checkData */) public view override returns (bool upkeepNeeded, bytes memory /* performData */) {
         bool isOpen = RaffleState.OPEN == s_raffleState;
+        // Solidity -> `block.timestamp` returns current blockchain timestamp, `lastTimeStamp` is saved in constructor
+        // `interval` is our time period to refresh contract in seconds
         bool timePassed = ((block.timestamp - s_lastTimeStamp) > i_interval);
         bool hasPlayers = s_players.length > 0;
         bool hasBalance = address(this).balance > 0;
+        // If below is true we can start picking our winner
         upkeepNeeded = (timePassed && isOpen && hasBalance && hasPlayers);
         return (upkeepNeeded, "0x0"); // can we comment this out?
     }
@@ -102,7 +108,10 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
      * @dev Once `checkUpkeep` is returning `true`, this function is called
      * and it kicks off a Chainlink VRF call to get a random winner.
      */
+    // Below function was originally named: `requestRandomWinner`
+    // As we do not have `performData` in checkUpkeep function we can comment it out
     function performUpkeep(bytes calldata /* performData */) external override {
+        // checkUpkeep returns 2 elements `upkeepNeeded` and `performData`, which doesnt exist and takes 1 argument `checkData` which is also empty sowe use ""
         (bool upkeepNeeded, ) = checkUpkeep("");
         // require(upkeepNeeded, "Upkeep not needed");
         if (!upkeepNeeded) {
@@ -130,6 +139,7 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         s_recentWinner = recentWinner;
         s_players = new address payable[](0);
         s_raffleState = RaffleState.OPEN;
+        // Resetting timestamp so checkUpkeep can run again and again
         s_lastTimeStamp = block.timestamp;
         (bool success, ) = recentWinner.call{value: address(this).balance}("");
         // require(success, "Transfer failed");
@@ -145,6 +155,7 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         return s_raffleState;
     }
 
+    // Since NumWords is const variable, and it is not reading from storage and not changing we can restrict it to pure
     function getNumWords() public pure returns (uint256) {
         return NUM_WORDS;
     }
