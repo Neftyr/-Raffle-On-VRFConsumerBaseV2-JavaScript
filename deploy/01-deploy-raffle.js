@@ -1,9 +1,12 @@
+const { utils } = require("ethers")
+const { parseBytes32String } = require("ethers/lib/utils")
 const { network, ethers } = require("hardhat")
 const { networkConfig, developmentChains, VERIFICATION_BLOCK_CONFIRMATIONS } = require("../helper-hardhat-config")
-const { vrfCoordinatorV2Interface_abi } = require("../utils/constants.js")
+const { vrfCoordinatorV2Interface_abi, linkTokenInterface_abi } = require("../utils/constants.js")
 const { verify } = require("../utils/verify")
 
 const FUND_AMOUNT = ethers.utils.parseEther("0.1") // 0.1 Ether
+const LINK_FUND_AMOUNT = ethers.utils.parseEther("1") // 1 LINK
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
     const { deploy, log } = deployments
@@ -30,18 +33,43 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     // Goerli Network \\
     else {
         vrfCoordinatorV2Address = networkConfig[chainId]["vrfCoordinatorV2"]
+        const [signer] = await ethers.getSigners()
+        //const signer = await ethers.getSigner(deployer)
+        log(`Signer: ${signer.address}`)
+        vrfCoordinatorV2 = new ethers.Contract(vrfCoordinatorV2Address, vrfCoordinatorV2Interface_abi, signer)
         subscriptionId = networkConfig[chainId]["subscriptionId"]
-        log(`Address: ${vrfCoordinatorV2Address}`)
-        log(`ABI: ${vrfCoordinatorV2Interface_abi}`)
+
         // If SubscriptionId doesn't exists -> create subscription
         if (subscriptionId == 0) {
             log("Creating VRFV2 Subscription...")
-            vrfCoordinatorV2 = new ethers.Contract(vrfCoordinatorV2Address, vrfCoordinatorV2Interface_abi, deployer)
-            //log(`yyy: ${vrfCoordinatorV2.address}, aaa: ${vrfCoordinatorV2}`)
             const transactionResponse = await vrfCoordinatorV2.createSubscription()
-            //const transactionReceipt = await transactionResponse.wait()
+            const transactionReceipt = await transactionResponse.wait()
             subscriptionId = transactionReceipt.events[0].args.subId
-            log(`Subscription Id: ${subscriptionId}`)
+        }
+        log(`Subscription Id: ${subscriptionId}`)
+
+        // Checking Subscription Balance...
+        log(`Checking Subscription Balance...`)
+        const getSub = await vrfCoordinatorV2.getSubscription(subscriptionId)
+        const { 0: balance, 1: reqCount, 2: owner, 3: consumers } = getSub
+        const correctedBal = balance / 10e17
+        log(`Subscription Balance Is: ${correctedBal} LINK`)
+
+        // Funding Subscription If Balance Is < 1 LINK
+        if (correctedBal < 1) {
+            log(`Funding Subscription...`)
+            //utils.toUtf8Bytes(subscriptionId)
+            const linkContractAddress = networkConfig[chainId]["linkToken"]
+            linkContract = new ethers.Contract(linkContractAddress, linkTokenInterface_abi, signer)
+            const fundSubTxResponse = await linkContract.transferAndCall(linkContractAddress, LINK_FUND_AMOUNT, utils.toUtf8Bytes(subscriptionId), {
+                from: deployer,
+            })
+            await fundSubTxResponse.wait()
+            const getBal = await vrfCoordinatorV2.getSubscription(subscriptionId)
+            const { 0: balance, 1: reqCount, 2: owner, 3: consumer } = getBal
+            const corrBal = balance / 10e17
+            log(`Funding Completed Successfully!`)
+            log(`Updated Subscription Balance Is: ${corrBal}`)
         }
     }
 
