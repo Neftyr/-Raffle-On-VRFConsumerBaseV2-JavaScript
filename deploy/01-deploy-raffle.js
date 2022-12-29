@@ -59,9 +59,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         if (correctedBal < 1) {
             log(`Funding Subscription...`)
             const formattedSubId = ethers.utils.hexZeroPad(ethers.utils.hexlify(parseInt(subscriptionId)), 32)
+            log(`Formatted SubId: ${formattedSubId}`)
             const linkContractAddress = networkConfig[chainId]["linkToken"]
             linkContract = new ethers.Contract(linkContractAddress, linkTokenInterface_abi, signer)
-            const fundSubTxResponse = await linkContract.transferAndCall(linkContractAddress, LINK_FUND_AMOUNT, formattedSubId, {
+            const fundSubTxResponse = await linkContract.transferAndCall(vrfCoordinatorV2Address, LINK_FUND_AMOUNT, formattedSubId, {
                 from: deployer,
             })
             await fundSubTxResponse.wait()
