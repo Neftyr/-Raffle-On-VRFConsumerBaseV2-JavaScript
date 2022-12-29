@@ -58,6 +58,9 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         // Funding Subscription If Balance Is < 1 LINK
         if (correctedBal < 1) {
             log(`Funding Subscription...`)
+            // "parseInt()" transforms the string to a integer or simply pass the integer.
+            // "ethers.utils.hexlify" transforms the integer to a HextString
+            // "ethers.utils.hexZeroPad" will add the necessary amount of zeros to make the value have the correct length in this case 32
             const formattedSubId = ethers.utils.hexZeroPad(ethers.utils.hexlify(parseInt(subscriptionId)), 32)
             log(`Formatted SubId: ${formattedSubId}`)
             const linkContractAddress = networkConfig[chainId]["linkToken"]
