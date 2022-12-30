@@ -135,7 +135,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
     // Verify the deployment
     if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
-        log("Verifying Raffle Contract...")
+        log(`Verifying Raffle Contract... ${raffle.address}`)
         await verify(raffle.address, arguments)
     }
 
