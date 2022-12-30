@@ -78,7 +78,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     }
 
     log("----------------------------------------------------")
-    log("Deploying Raffle Contract...")
 
     const arguments = [
         vrfCoordinatorV2Address,
