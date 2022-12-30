@@ -12,7 +12,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     const { deploy, log } = deployments
     const { deployer } = await getNamedAccounts()
     const chainId = network.config.chainId
-    let vrfCoordinatorV2, vrfCoordinatorV2Address, subscriptionId, vrfCoordinatorV2Mock
+    let vrfCoordinatorV2, vrfCoordinatorV2Address, subscriptionId, vrfCoordinatorV2Mock, raffleExists, raffle
     const waitBlockConfirmations = developmentChains.includes(network.name) ? 1 : VERIFICATION_BLOCK_CONFIRMATIONS
 
     // Local Network \\
@@ -89,25 +89,56 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         networkConfig[chainId]["callbackGasLimit"],
     ]
 
-    // const raffle = await deploy("Raffle", {
-    //     from: deployer,
-    //     args: arguments,
-    //     log: true,
-    //     waitConfirmations: waitBlockConfirmations,
-    // })
-    // log(`Raffle Contract Deployed At: ${raffle.address}`)
+    // Checking If Raffle Already Exists...
+    if (!developmentChains.includes(network.name)) {
+        try {
+            log(`Checking If Raffle Already Exists...`)
+            raffle = await deployments.get("Raffle")
+            log(`Raffle Already Exists: ${raffle.address}`)
+        } catch (error) {
+            log(`Raffle Doesn't Exists`)
+            raffleExists = false
+        }
+    }
 
-    // // Ensure the Raffle contract is a valid consumer of the VRFCoordinatorV2Mock contract.
-    // if (developmentChains.includes(network.name)) {
-    //     const vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock")
-    //     await vrfCoordinatorV2Mock.addConsumer(subscriptionId, raffle.address)
-    // }
+    if (developmentChains.includes(network.name) || raffleExists == false) {
+        raffle = await deploy("Raffle", {
+            from: deployer,
+            args: arguments,
+            log: true,
+            waitConfirmations: waitBlockConfirmations,
+        })
+    }
+    log(`Raffle Contract Deployed At: ${raffle.address}`)
 
-    // // Verify the deployment
-    // if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
-    //     log("Verifying Raffle Contract...")
-    //     await verify(raffle.address, arguments)
-    // }
+    // Ensure the Raffle contract is a valid consumer of the VRFCoordinatorV2Mock contract.
+    if (developmentChains.includes(network.name)) {
+        log(`Adding Consumer...`)
+        const vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock")
+        await vrfCoordinatorV2Mock.addConsumer(subscriptionId, raffle.address)
+        log(`Consumer Successfully Added!`)
+    }
+    // Checking If Deployed Raffle Is Added To Consumer List...
+    // Adding Raffle Contract To Consumer List If It Is Not...
+    else {
+        const getConsumers = await vrfCoordinatorV2.getSubscription(subscriptionId)
+        const { 0: balance, 1: reqCount, 2: owner, 3: consumers } = getConsumers
+        log(`Consumers: ${consumers}`)
+        if (!consumers.includes(raffle.address)) {
+            log(`Adding Consumer...`)
+            const addConsumerTxResponse = await vrfCoordinatorV2.addConsumer(subscriptionId, raffle.address)
+            await addConsumerTxResponse.wait()
+            const getConsumer = await vrfCoordinatorV2.getSubscription(subscriptionId)
+            const { 0: balance, 1: reqCount, 2: owner, 3: consumer } = getConsumer
+            log(`Consumer Successfully Added! Consumers: ${consumer}`)
+        }
+    }
+
+    // Verify the deployment
+    if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
+        log("Verifying Raffle Contract...")
+        await verify(raffle.address, arguments)
+    }
 
     // log("Enter lottery with command:")
     // const networkName = network.name == "hardhat" ? "localhost" : network.name
