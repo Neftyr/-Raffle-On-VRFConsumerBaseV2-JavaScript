@@ -125,5 +125,26 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                   // We cannot call "performUpkeep" twice! To run below comment out lines from "txResponse" to "assert.equal"
                   // await expect(raffle.performUpkeep("0x")).to.emit(raffle, "RequestedRaffleWinner")
               })
+              describe("fulfillRandomWords", function () {
+                  beforeEach(async () => {
+                      await raffle.enterRaffle({ value: raffleEntranceFee })
+                      await network.provider.send("evm_increaseTime", [interval.toNumber() + 1])
+                      await network.provider.request({ method: "evm_mine", params: [] })
+                  })
+                  it("can only be called after performupkeep", async () => {
+                      await expect(vrfCoordinatorV2Mock.fulfillRandomWords(0, raffle.address)).to.be.revertedWith("nonexistent request")
+                      await expect(vrfCoordinatorV2Mock.fulfillRandomWords(1, raffle.address)).to.be.revertedWith("nonexistent request")
+                  })
+                  it("picks a winner, resets, and sends money", async () => {
+                      const additionalEntrances = 3 // to test
+                      const startingIndex = 2
+                      // Connecting New Players To Raffle
+                      for (let i = startingIndex; i < startingIndex + additionalEntrances; i++) {
+                          raffle = raffleContract.connect(accounts[i])
+                          await raffle.enterRaffle({ value: raffleEntranceFee })
+                      }
+                      const startingTimeStamp = await raffle.getLastTimeStamp() // stores starting timestamp (before we fire our event)
+                  })
+              })
           })
       })
