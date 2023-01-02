@@ -5,7 +5,7 @@ const { networkConfig, developmentChains, VERIFICATION_BLOCK_CONFIRMATIONS } = r
 const { vrfCoordinatorV2Interface_abi, linkTokenInterface_abi } = require("../utils/constants.js")
 const { verify } = require("../utils/verify")
 
-const FUND_AMOUNT = ethers.utils.parseEther("0.1") // 0.1 Ether
+const FUND_AMOUNT = ethers.utils.parseEther("1") // 1 Ether
 const LINK_FUND_AMOUNT = ethers.utils.parseEther("1") // 1 LINK
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
