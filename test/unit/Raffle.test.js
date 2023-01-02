@@ -144,7 +144,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
           })
           describe("fulfillRandomWords", function () {
               beforeEach(async () => {
-                  //await raffle.enterRaffle({ value: raffleEntranceFee })
+                  await raffle.enterRaffle({ value: raffleEntranceFee })
                   await network.provider.send("evm_increaseTime", [interval.toNumber() + 1])
                   await network.provider.request({ method: "evm_mine", params: [] })
               })
@@ -171,7 +171,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                   // fulfillRandomWords (mock being ChainLink VRF)
                   // We will have to wait for the fulfillRandomWords to be called
                   await new Promise(async (resolve, reject) => {
-                      // WinnerPicked is emit from fulfillRandomWords function
+                      // WinnerPicked is emit from fulfillRandomWords function, so we create listener and once it fire we can start testing
                       raffle.once("WinnerPicked", async () => {
                           // event listener for WinnerPicked
                           console.log("WinnerPicked event fired!")
@@ -205,6 +205,8 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                       })
 
                       // Kicking off the event by mocking the chainlink keepers and vrf coordinator
+                      const numberOfPlayers = await raffle.getNumberOfPlayers()
+                      console.log(`Number Of Players: ${numberOfPlayers}`)
                       const tx = await raffle.performUpkeep("0x")
                       const txReceipt = await tx.wait(1)
                       const startingBalance = await accounts[2].getBalance()
