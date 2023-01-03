@@ -144,6 +144,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
           })
           describe("fulfillRandomWords", function () {
               beforeEach(async () => {
+                  // Player 1 declared in 1st beforeEach at the top is entering Raffle
                   await raffle.enterRaffle({ value: raffleEntranceFee })
                   await network.provider.send("evm_increaseTime", [interval.toNumber() + 1])
                   await network.provider.request({ method: "evm_mine", params: [] })
@@ -196,11 +197,12 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                               assert.equal(raffleState, 0)
                               assert.equal(
                                   winnerBalance.toString(),
-                                  startingBalance.add(raffleEntranceFee.mul(additionalEntrances).add(raffleEntranceFee)).toString()
+                                  startingBalance.add(raffleEntranceFee.mul(additionalEntrances).add(raffleEntranceFee)).toString() // player 1 and 3 additional players
                               )
                               assert(endingTimeStamp > startingTimeStamp)
                               resolve() // if try passes, resolves the promise
                           } catch (e) {
+                              console.log(e)
                               reject(e) // if try fails, rejects the promise
                           }
                       })
@@ -208,6 +210,9 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                       // Kicking off the event by mocking the chainlink keepers and vrf coordinator
                       const numberOfPlayers = await raffle.getNumberOfPlayers()
                       console.log(`Number Of Players: ${numberOfPlayers}`)
+                      const getParticipants = await raffle.getParticipants()
+                      console.log(`Raffle Participants: ${getParticipants}`)
+
                       const tx = await raffle.performUpkeep("0x")
                       const txReceipt = await tx.wait(1)
                       const startingBalance = await accounts[2].getBalance()
