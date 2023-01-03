@@ -152,9 +152,10 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                   await expect(vrfCoordinatorV2Mock.fulfillRandomWords(0, raffle.address)).to.be.revertedWith("nonexistent request")
                   await expect(vrfCoordinatorV2Mock.fulfillRandomWords(1, raffle.address)).to.be.revertedWith("nonexistent request")
               })
+              // it("revert when transaction fails", async () => {}) -> to be checked how to code test for it
               it("picks a winner, resets, and sends money", async () => {
                   const additionalEntrances = 3 // to test 3 more players
-                  const startingIndex = 2 // deployer = 0, and player 1 defined in 1st beforeEach() at the top (total 5 players)
+                  const startingIndex = 2 // deployer = 0 (not playing), and player 1 defined in 1st beforeEach() at the top (total 5 players)
                   console.log(`Balance of Player 0: ${await accounts[0].getBalance()} and 1: ${await accounts[1].getBalance()}`)
                   console.log(`Player that didnt enter lottery: ${await accounts[5].getBalance()}`)
                   // Connecting New Players To Raffle
