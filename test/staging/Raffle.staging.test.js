@@ -36,6 +36,9 @@ developmentChains.includes(network.name)
                       raffle.once("WinnerPicked", async () => {
                           console.log("WinnerPicked event fired!")
                           try {
+                              // To slow down test and make sure "Ok, time to wait..." will get printed after entering Raffle we can do below:
+                              // setTimeout(async () => {}) -> this should wrap whole "try"
+
                               // add our asserts here
                               const recentWinner = await raffle.getRecentWinner()
                               const raffleState = await raffle.getRaffleState()
