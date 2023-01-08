@@ -6,7 +6,7 @@ const { developmentChains } = require("../../helper-hardhat-config")
 // 1. Get SubId on ChainLink VRF
 // 2. Deploy our contract using that subId on testnet
 // 3. Add deployed Raffle contract as consumer on ChainLinkVRF
-// 4. Register contract with ChainLink Keepers => go to: https://automation.chain.link/, crontab.guru
+// 4. Register contract with ChainLink Keepers (custom) => go to: https://automation.chain.link/, crontab.guru
 // 5. Run staging tests
 
 developmentChains.includes(network.name)
