@@ -32,8 +32,13 @@ const networkConfig = {
 const developmentChains = ["hardhat", "localhost"]
 const VERIFICATION_BLOCK_CONFIRMATIONS = 6
 
+const FRONT_END_ADDRESSES_FILE = "../VRFConsumerV2_Raffle_FrontEnd/constants/contractAddresses.json"
+const FRONT_END_ABI_FILE = "../VRFConsumerV2_Raffle_FrontEnd/constants/contractAbi.json"
+
 module.exports = {
     networkConfig,
     developmentChains,
     VERIFICATION_BLOCK_CONFIRMATIONS,
+    FRONT_END_ADDRESSES_FILE,
+    FRONT_END_ABI_FILE,
 }
