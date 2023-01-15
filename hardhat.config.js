@@ -19,6 +19,10 @@ module.exports = {
             blockConfirmations: 1,
             // gasPrice: 130000000000,
         },
+        localhost: {
+            chainId: 31337,
+            blockConfirmations: 1,
+        },
         goerli: {
             url: GOERLI_RPC_URL,
             accounts: [PRIVATE_KEY],
