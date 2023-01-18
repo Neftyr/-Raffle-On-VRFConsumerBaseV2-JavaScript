@@ -1,5 +1,3 @@
-const { utils } = require("ethers")
-const { parseBytes32String } = require("ethers/lib/utils")
 const { network, ethers } = require("hardhat")
 const { networkConfig, developmentChains, VERIFICATION_BLOCK_CONFIRMATIONS } = require("../helper-hardhat-config")
 const { vrfCoordinatorV2Interface_abi, linkTokenInterface_abi } = require("../utils/constants.js")
