@@ -117,8 +117,11 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
               })
               it("revert if upkeep not needed", async () => {
                   await expect(raffle.performUpkeep([])).to.be.revertedWith("Raffle__UpkeepNotNeeded")
-                  // We can also do below for multiple arguments errors using EXPECTED values of those arguments:
 
+                  // Custom Error -> check Obsidian -> JavaScript for info how to implement it...
+                  //await expect(raffle.performUpkeep([])).to.be.revertedWithCustomError(raffle, "Raffle__UpkeepNotNeeded")
+
+                  // We can also do below for multiple arguments errors using EXPECTED values of those arguments:
                   // const raffleBalance = await ethers.provider.getBalance(raffle.address)
                   // console.log(`Raffle Balance Is: ${raffleBalance}`)
                   // await expect(raffle.performUpkeep([])).to.be.revertedWith(`Raffle__UpkeepNotNeeded(${raffleBalance}, ${0}, ${0})`)
